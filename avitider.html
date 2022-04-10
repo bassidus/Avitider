@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<!-- Hjälpfil för att söka i avi-filen -->
+<!-- Skapad av Carl-Magnus Arvidsson -->
+<!-- för DHL Freight Norrköping -->
+<!-- 2022-04-10 -->
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>Sök Avitider</title>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.3/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
+  <link rel="icon" type="image/png" href="https://assets.dpdhl-brands.com/guides/dhl/guides/design-basics/icons/dosdonts/dhl_icons_dosdonts_3.png"/>
+</head>
+
+<body class="container">
+  <section>
+    <div class="container">
+      <p>Klicka på knappen nedan och välj sedan avi-filen</p>
+      <input class='input is-medium' type="file" id="fileUpload" accept=".xls,.xlsx" /> <br />
+    </div>
+  </section>
+</body>
+
+<script>
+  const body = document.body;
+  const loadFileButton = document.getElementById("fileUpload");
+  const searchBox = document.createElement('input');
+  const display = document.createElement('div');
+  let dataArray;
+  searchBox.type = 'text';
+  searchBox.classList.add('input');
+  searchBox.classList.add('is-large');
+  searchBox.placeholder = 'Sök adress';
+  searchBox.addEventListener('keyup', () => search());
+  loadFileButton.addEventListener("change", (e) => loadData(e));
+  display.classList.add('container');
+
+  function loadData(userInput) {
+    let selectedFile = userInput.target.files[0];
+    if (selectedFile) {
+      let fileReader = new FileReader();
+      fileReader.onload = function (event) {
+        let data = event.target.result;
+        let workbook = XLSX.read(data, {
+          type: "binary"
+        });
+        dataArray = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']);
+        body.innerHTML = '';
+        body.appendChild(searchBox);
+        body.appendChild(display);
+      };
+      fileReader.readAsBinaryString(selectedFile);
+    }
+  }
+
+  function search() {
+    let searchKey = searchBox.value.toUpperCase();
+    renderResult(dataArray.filter(function (element) {
+      if (element.__EMPTY && element.__EMPTY.includes(searchKey)) {
+        return element;
+      }
+    }));
+  }
+
+  function renderResult(result) {
+    display.innerHTML = '';
+
+    if (result.length > 1000) {
+      return;
+    }
+
+    let table = document.createElement('table');
+    let thead = document.createElement('thead');
+    let headerRow = document.createElement('tr');
+    table.classList.add('table', 'is-striped', 'is-fullwidth');
+
+    const headers = [
+      'Postnr',
+      'Adress',
+      'Nr Från',
+      'Nr Till',
+      'Lastbil',
+      'Paketbil',
+      'Lastbil tid',
+      'Paketbil tid',
+      'Dagar'
+    ];
+
+    for (let i = 0; i < headers.length; i++) {
+      let h = document.createElement('th');
+      h.innerHTML = headers[i];
+      headerRow.appendChild(h);
+    }
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+    let tbody = document.createElement('tbody');
+
+    result.forEach(element => {
+      const keys = [
+        'Post Nr',
+        '__EMPTY',
+        '__EMPTY_1',
+        'Adr Nr',
+        'Lastbil',
+        'Paketbil',
+        'LASTBIL TID',
+        'PAKETBIL TID',
+        'DistrDagar'
+      ];
+
+      let tr = document.createElement('tr');
+      for (let i = 0; i < keys.length; i++) {
+        let td = document.createElement('td');
+        td.innerHTML = element[keys[i]] == undefined ? '' : element[keys[i]];
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+      }
+    });
+    table.appendChild(tbody);
+    display.appendChild(table);
+  }
+</script>
+
+</html>
