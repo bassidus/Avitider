@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<!-- Hjälpfil för att söka i avi-filen -->
-<!-- Skapad av Carl-Magnus Arvidsson -->
-<!-- för DHL Freight Norrköping -->
+<!-- Skript för att enkelt söka i avifilen -->
+<!-- Skapad av Carl-Magnus Arvidsson för DHL Freight Norrköping -->
 <!-- 2022-04-10 -->
 
 <html lang="en">
@@ -11,15 +10,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <title>Sök Avitider</title>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.15.3/xlsx.full.min.js"></script>
+
+  <!-- https://cdnjs.com/libraries/xlsx -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.core.min.js"></script>
+
+  <!-- https://bulma.io/documentation/ -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css">
-  <link rel="icon" type="image/png" href="https://assets.dpdhl-brands.com/guides/dhl/guides/design-basics/icons/dosdonts/dhl_icons_dosdonts_3.png"/>
+
+  <!-- fav-icon -->
+  <link rel="icon" type="image/png"
+    href="https://assets.dpdhl-brands.com/guides/dhl/guides/design-basics/icons/dosdonts/dhl_icons_dosdonts_3.png" />
 </head>
 
 <body class="container">
   <section>
     <div class="container">
-      <p>Klicka på knappen nedan och välj sedan avi-filen</p>
+      <p>Klicka på knappen nedan och välj sedan avifilen på din dator</p>
       <input class='input is-medium' type="file" id="fileUpload" accept=".xls,.xlsx" /> <br />
     </div>
   </section>
@@ -31,6 +37,7 @@
   const searchBox = document.createElement('input');
   const display = document.createElement('div');
   let dataArray;
+
   searchBox.type = 'text';
   searchBox.classList.add('input');
   searchBox.classList.add('is-large');
@@ -39,6 +46,7 @@
   loadFileButton.addEventListener("change", (e) => loadData(e));
   display.classList.add('container');
 
+  // Ladda excelfilen
   function loadData(userInput) {
     let selectedFile = userInput.target.files[0];
     if (selectedFile) {
@@ -48,7 +56,7 @@
         let workbook = XLSX.read(data, {
           type: "binary"
         });
-        dataArray = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']);
+        dataArray = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']); // data är namnet på "fliken"
         body.innerHTML = '';
         body.appendChild(searchBox);
         body.appendChild(display);
@@ -59,17 +67,32 @@
 
   function search() {
     let searchKey = searchBox.value.toUpperCase();
-    renderResult(dataArray.filter(function (element) {
-      if (element.__EMPTY && element.__EMPTY.includes(searchKey)) {
-        return element;
-      }
-    }));
+    let result;
+
+    // Sök adress
+    if (!parseInt(searchKey)) {
+      result = dataArray.filter(function (element) {
+        if (element.Adress && element.Adress.includes(searchKey)) {
+          return element;
+        }
+      });
+
+      // Sök postnummer
+    } else if (searchKey.length > 3) {
+      result = dataArray.filter(function (element) {
+        if (String(element.PostNr) && String(element.PostNr).includes(searchKey)) {
+          return element;
+        }
+      });
+    }
+    renderResult(result);
   }
 
+  // Presentera resultatet på skärmen
   function renderResult(result) {
     display.innerHTML = '';
 
-    if (result.length > 1000) {
+    if (result.length > 2000) {
       return;
     }
 
@@ -101,15 +124,16 @@
     let tbody = document.createElement('tbody');
 
     result.forEach(element => {
+      // Rubriker från data fliken i excel-dokumentet
       const keys = [
-        'Post Nr',
-        '__EMPTY',
-        '__EMPTY_1',
-        'Adr Nr',
+        'PostNr',
+        'Adress',
+        'AdrFr',
+        'AdrTi',
         'Lastbil',
         'Paketbil',
-        'LASTBIL TID',
-        'PAKETBIL TID',
+        'LastbilTid',
+        'PaketbilTid',
         'DistrDagar'
       ];
 
