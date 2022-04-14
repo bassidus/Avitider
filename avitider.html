@@ -20,13 +20,15 @@
   <!-- fav-icon -->
   <link rel="icon" type="image/png"
     href="https://assets.dpdhl-brands.com/guides/dhl/guides/design-basics/icons/dosdonts/dhl_icons_dosdonts_3.png" />
+
 </head>
 
 <body class="container" style="padding-top: 50px">
   <section>
-    <div class="container">
+    <div class="container loader-wrapper">
       <p>Klicka på knappen nedan och välj sedan avifilen på din dator</p>
-      <input class='input is-medium' type="file" id="fileUpload" accept=".xls,.xlsx" /> <br />
+
+      <input class='input is-medium is-active' type="file" id="fileUpload" accept=".xls,.xlsx" /> <br />
     </div>
   </section>
 </body>
@@ -42,13 +44,14 @@
   searchBox.classList.add('input');
   searchBox.classList.add('is-large');
   searchBox.placeholder = 'Sök adress eller postnummer';
-  searchBox.addEventListener('keyup', () => search());
-  loadFileButton.addEventListener("change", (e) => loadData(e));
+  searchBox.addEventListener('keyup', search);
+  loadFileButton.addEventListener("change", loadData);
   display.classList.add('container');
 
   // Ladda excelfilen
   function loadData(userInput) {
     let selectedFile = userInput.target.files[0];
+    loadFileButton.classList.add('loader')
     if (selectedFile) {
       let fileReader = new FileReader();
       fileReader.onload = function (event) {
@@ -60,8 +63,10 @@
         body.innerHTML = '';
         body.appendChild(searchBox);
         body.appendChild(display);
+        searchBox.focus();
       };
       fileReader.readAsBinaryString(selectedFile);
+      
     }
   }
 
@@ -92,6 +97,9 @@
   function renderResult(result) {
     display.innerHTML = '';
 
+    // om det är alldeles för många resultat på en sökning
+    // avbryt för att det inte ska bli långsamt
+    // jag kände att 2000 var en lämplig maxgräns
     if (result.length > 2000) {
       return;
     }
