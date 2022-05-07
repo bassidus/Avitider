@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Skript för att enkelt söka i avifilen -->
-<!-- Skapad av Carl-Magnus Arvidsson för DHL Freight Norrköping -->
-<!-- 2022-04-10 -->
+<!-- Skapad av Carl-Magnus "Basse" Arvidsson för DHL Freight Norrköping -->
+<!-- Senast uppdaterad 2022-05-07 -->
 
 <html lang="en">
 
@@ -11,7 +11,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <title>Sök Avitider</title>
 
-  <!-- https://cdnjs.com/libraries/xlsx -->
+  <!-- https://cdnjs.com/libraries/xlsx - det är detta script som gör det möjligt att öppna excel-filer-->
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.core.min.js"></script>
 
   <!-- https://bulma.io/documentation/ -->
@@ -21,12 +21,13 @@
   <link rel="icon" type="image/png"
     href="https://assets.dpdhl-brands.com/guides/dhl/guides/design-basics/icons/dosdonts/dhl_icons_dosdonts_3.png" />
 
+ 
 </head>
 
 <body class="container" style="padding-top: 50px">
   <section>
     <div class="container loader-wrapper">
-      <p>Klicka på knappen nedan och välj sedan avifilen på din dator</p>
+      <p id="p">Klicka på knappen nedan och välj sedan avifilen på din dator</p>
 
       <input class='input is-medium is-active' type="file" id="fileUpload" accept=".xls,.xlsx" /> <br />
     </div>
@@ -38,20 +39,15 @@
   const loadFileButton = document.getElementById("fileUpload");
   const searchBox = document.createElement('input');
   const display = document.createElement('div');
-  let dataArray;
+  let aviData;
 
-  searchBox.type = 'text';
-  searchBox.classList.add('input');
-  searchBox.classList.add('is-large');
-  searchBox.placeholder = 'Sök adress eller postnummer';
-  searchBox.addEventListener('keyup', search);
   loadFileButton.addEventListener("change", loadData);
   display.classList.add('container');
 
   // Ladda excelfilen
   function loadData(userInput) {
+    waitSpin();
     let selectedFile = userInput.target.files[0];
-    loadFileButton.classList.add('loader')
     if (selectedFile) {
       let fileReader = new FileReader();
       fileReader.onload = function (event) {
@@ -59,15 +55,33 @@
         let workbook = XLSX.read(data, {
           type: "binary"
         });
-        dataArray = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']); // data är namnet på "fliken"
-        body.innerHTML = '';
-        body.appendChild(searchBox);
-        body.appendChild(display);
-        searchBox.focus();
+        aviData = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']); // data är namnet på "fliken"
+        initSearchPage();
       };
       fileReader.readAsBinaryString(selectedFile);
-      
+
     }
+  }
+
+  function waitSpin() {
+    const p = document.getElementById('p');
+    p.innerText = '';
+    loadFileButton.style.width = '150px';
+    loadFileButton.innerText = '';
+    loadFileButton.style.margin = 'auto';
+    loadFileButton.classList.add('loader');
+  }
+
+  function initSearchPage() {
+    searchBox.type = 'text';
+    searchBox.classList.add('input');
+    searchBox.classList.add('is-large');
+    searchBox.placeholder = 'Sök adress eller postnummer';
+    searchBox.addEventListener('keyup', search);
+    body.innerHTML = '';
+    body.appendChild(searchBox);
+    body.appendChild(display);
+    searchBox.focus();
   }
 
   function search() {
@@ -76,7 +90,7 @@
 
     // Sök adress
     if (!parseInt(searchKey)) {
-      result = dataArray.filter(function (element) {
+      result = aviData.filter(function (element) {
         if (element.Adress && element.Adress.includes(searchKey)) {
           return element;
         }
@@ -84,7 +98,7 @@
 
       // Sök postnummer
     } else if (searchKey.length > 3) {
-      result = dataArray.filter(function (element) {
+      result = aviData.filter(function (element) {
         if (String(element.PostNr) && String(element.PostNr).includes(searchKey)) {
           return element;
         }
@@ -112,12 +126,12 @@
     const headers = [
       'Postnr',
       'Adress',
-      'Nr Från',
-      'Nr Till',
+      'Från',
+      'Till',
       'Lastbil',
       'Paketbil',
-      'Lastbil tid',
-      'Paketbil tid',
+      'Lastbilstid',
+      'Paketbilstid',
       'Dagar'
     ];
 
