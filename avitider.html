@@ -3,7 +3,7 @@
 <!-- Skapad av Carl-Magnus "Basse" Arvidsson för DHL Freight Norrköping -->
 <!-- Senast uppdaterad 2022-05-07 -->
 
-<html lang="en">
+<html lang="sv">
 
 <head>
   <meta charset="UTF-8" />
@@ -20,8 +20,6 @@
   <!-- fav-icon -->
   <link rel="icon" type="image/png"
     href="https://assets.dpdhl-brands.com/guides/dhl/guides/design-basics/icons/dosdonts/dhl_icons_dosdonts_3.png" />
-
- 
 </head>
 
 <body class="container" style="padding-top: 50px">
@@ -39,12 +37,11 @@
   const loadFileButton = document.getElementById("fileUpload");
   const searchBox = document.createElement('input');
   const display = document.createElement('div');
-  let aviData;
+  let excelFile;
 
   loadFileButton.addEventListener("change", loadData);
   display.classList.add('container');
 
-  // Ladda excelfilen
   function loadData(userInput) {
     waitSpin();
     let selectedFile = userInput.target.files[0];
@@ -55,21 +52,22 @@
         let workbook = XLSX.read(data, {
           type: "binary"
         });
-        aviData = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']); // data är namnet på "fliken"
+        excelFile = XLSX.utils.sheet_to_row_object_array(workbook.Sheets['data']);
         initSearchPage();
       };
       fileReader.readAsBinaryString(selectedFile);
-
     }
   }
 
   function waitSpin() {
     const p = document.getElementById('p');
     p.innerText = '';
-    loadFileButton.style.width = '150px';
-    loadFileButton.innerText = '';
-    loadFileButton.style.margin = 'auto';
-    loadFileButton.classList.add('loader');
+    p.style.height = '100px';
+    p.style.width = '100px';
+    p.style.margin = 'auto';
+    p.style.border = 10;
+    p.classList.add('loader');
+    loadFileButton.remove();
   }
 
   function initSearchPage() {
@@ -85,35 +83,32 @@
   }
 
   function search() {
-    let searchKey = searchBox.value.toUpperCase();
-    let result;
+    const result = [];
+    let keys = searchBox.value.toUpperCase().split(' ');
 
-    // Sök adress
-    if (!parseInt(searchKey)) {
-      result = aviData.filter(function (element) {
-        if (element.Adress && element.Adress.includes(searchKey)) {
-          return element;
+    if (parseInt(keys[0])) {
+      let pnr = keys[0];
+      keys.shift();
+      let keyword = keys.join(' ');
+      excelFile.forEach((e) => {
+        if (e.PostNr == pnr && String(e.Adress).includes(keyword)) {
+          result.push(e);
         }
       });
-
-      // Sök postnummer
-    } else if (searchKey.length > 3) {
-      result = aviData.filter(function (element) {
-        if (String(element.PostNr) && String(element.PostNr).includes(searchKey)) {
-          return element;
+    } else {//if (keys[0].length > 2) {
+      let keyword = keys.join(' ');
+      excelFile.forEach((e) => {
+        if (String(e.Adress).includes(keyword)) {
+          result.push(e);
         }
       });
     }
     renderResult(result);
   }
 
-  // Presentera resultatet på skärmen
   function renderResult(result) {
     display.innerHTML = '';
 
-    // om det är alldeles för många resultat på en sökning
-    // avbryt för att det inte ska bli långsamt
-    // jag kände att 2000 var en lämplig maxgräns
     if (result.length > 2000) {
       return;
     }
@@ -146,7 +141,6 @@
     let tbody = document.createElement('tbody');
 
     result.forEach(element => {
-      // Rubriker från data fliken i excel-dokumentet
       const keys = [
         'PostNr',
         'Adress',
