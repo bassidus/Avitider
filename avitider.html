@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<!-- Skript för att enkelt söka i avifilen -->
+<!-- Skript för att söka i avifilen -->
 <!-- Skapad av Carl-Magnus "Basse" Arvidsson för DHL Freight Norrköping -->
-<!-- Senast uppdaterad 2022-05-07 -->
+<!-- Senast uppdaterad 2022-10-08 -->
 
 <html lang="sv">
 
@@ -95,7 +95,7 @@
           result.push(e);
         }
       });
-    } else {//if (keys[0].length > 2) {
+    } else {
       let keyword = keys.join(' ');
       excelFile.forEach((e) => {
         if (String(e.Adress).includes(keyword)) {
